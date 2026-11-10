@@ -6,6 +6,10 @@ backend/.env
 # Runtime data
 backend/data/app.db
 backend/data/*.db
+backend/data/*.db-wal
+backend/data/*.db-shm
+*.db-wal
+*.db-shm
 backend/data/uploads/
 
 # Python
