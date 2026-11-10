@@ -124,7 +124,31 @@ npm run build
 │   ├── BACKEND_ARCHITECTURE.md
 │   └── API_CONTRACT.md
 └── scripts/
+    ├── dev.sh                 # 一键启动（建 venv + 装依赖 + 热重载）
+    ├── build-check.mjs        # 前端结构自检
+    └── push-to-github.sh      # 推送到 GitHub（自动建私有仓库）
 ```
+
+## 多机协作 / 同步提交
+
+仓库已初始化 git，分支为 `main`。`.env`、`*.db`、`uploads/` 均已忽略，**密钥和本机数据不会入库**。
+
+在新机器上拉取：
+
+```bash
+git clone https://github.com/<你的账号>/job-competency-agent.git
+cd job-competency-agent
+cp backend/.env.example backend/.env   # 填入自己的密钥
+./scripts/dev.sh
+```
+
+日常提交：
+
+```bash
+git add -A && git commit -m "feat: 说明改了什么" && git push
+```
+
+若两台机器都改过，推送前先 `git pull --rebase`，避免冲突提交。
 
 ## 竞赛源码包安全说明
 
