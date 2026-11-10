@@ -1,0 +1,80 @@
+[
+  {
+    "id": "java-backend",
+    "name": "Java 后端开发工程师",
+    "version": "v1.0",
+    "seniority": "初中级",
+    "focus": "验证后端技术深度、工程交付和可靠性意识",
+    "competencies": [
+      {"id":"backend-depth","name":"后端技术深度","definition":"能解释 Java、数据库、缓存、并发等关键技术的原理与取舍","weight":30,"score":82,"status":"partial","training":"SQL 执行计划与缓存一致性专项"},
+      {"id":"delivery-quality","name":"工程交付与质量","definition":"能把需求拆解为可上线、可验证、可维护的工程方案","weight":25,"score":78,"status":"verified","training":"服务治理与测试设计"},
+      {"id":"reliability","name":"问题解决与可靠性","definition":"能定位故障、控制风险并用数据验证修复效果","weight":20,"score":72,"status":"partial","training":"故障演练与可观测性"},
+      {"id":"collaboration","name":"沟通协作","definition":"能让上下游理解技术方案、边界和交付节奏","weight":10,"score":86,"status":"verified","training":"技术方案表达"},
+      {"id":"learning","name":"学习适应","definition":"能根据新约束快速学习并迁移方法","weight":10,"score":76,"status":"partial","training":"新技术调研复盘"},
+      {"id":"ownership","name":"责任意识","definition":"能对结果负责，主动暴露风险并推动闭环","weight":5,"score":88,"status":"verified","training":"项目复盘与行动项"}
+    ],
+    "jdSignals": [
+      {"quote":"负责核心服务设计、开发与性能优化","competency":"backend-depth","priority":"高"},
+      {"quote":"保障系统稳定性并处理线上问题","competency":"reliability","priority":"高"},
+      {"quote":"与产品、测试协作推动版本交付","competency":"collaboration","priority":"中"}
+    ],
+    "questions": [
+      {"stage":"自我介绍","text":"请用 90 秒介绍一个最能代表你后端能力的项目，先说明业务目标和你的职责。","competency":"delivery-quality"},
+      {"stage":"项目深挖","text":"你在这个项目里做过一次关键技术取舍吗？请说明备选方案、最终选择和验证结果。","competency":"backend-depth"},
+      {"stage":"能力考察","text":"如果线上接口突然变慢，你会如何定位？请按时间顺序说明指标、工具、判断和止损动作。","competency":"reliability"},
+      {"stage":"总结反馈","text":"回看这段经历，你会补做哪一个工程动作来降低下一次风险？为什么？","competency":"ownership"}
+    ]
+  },
+  {
+    "id": "ai-algorithm",
+    "name": "AI 算法工程师",
+    "version": "v1.0",
+    "seniority": "初中级",
+    "focus": "验证模型推理、数据实验、评估和工程化能力",
+    "competencies": [
+      {"id":"model-reasoning","name":"模型与算法推理","definition":"能解释模型选择、特征或架构设计及其适用边界","weight":30,"score":80,"status":"partial","training":"模型结构与误差分析"},
+      {"id":"data-experiment","name":"数据、实验与评估","definition":"能建立可靠数据集、指标和实验对照，识别泄漏与偏差","weight":25,"score":74,"status":"partial","training":"实验设计与离线评估"},
+      {"id":"ml-engineering","name":"工程化与部署","definition":"能将模型稳定部署并关注延迟、成本和可观测性","weight":15,"score":77,"status":"partial","training":"模型服务化与监控"},
+      {"id":"problem-solving","name":"问题解决","definition":"能从误差现象出发拆解问题并持续迭代","weight":15,"score":83,"status":"verified","training":"误差归因工作坊"},
+      {"id":"communication","name":"沟通协作","definition":"能让非算法角色理解结论、风险和下一步","weight":10,"score":86,"status":"verified","training":"模型结论表达"},
+      {"id":"learning","name":"学习与研究能力","definition":"能快速吸收新方法并判断是否值得引入","weight":5,"score":88,"status":"verified","training":"论文复现与判断"}
+    ],
+    "jdSignals": [
+      {"quote":"负责模型训练、调优与效果评估","competency":"model-reasoning","priority":"高"},
+      {"quote":"建设数据闭环并提升线上指标","competency":"data-experiment","priority":"高"},
+      {"quote":"推动模型部署与服务化","competency":"ml-engineering","priority":"中"}
+    ],
+    "questions": [
+      {"stage":"自我介绍","text":"请介绍一个你负责的模型项目，说明问题、数据、模型和你的具体贡献。","competency":"model-reasoning"},
+      {"stage":"项目深挖","text":"模型效果没有达到预期时，你如何设计 baseline、切分数据和误差分析？","competency":"data-experiment"},
+      {"stage":"能力考察","text":"模型上线后延迟或成本超标，你会从哪些层面优化并如何验证？","competency":"ml-engineering"},
+      {"stage":"总结反馈","text":"你会如何向业务方解释模型的不确定性和适用边界？","competency":"communication"}
+    ]
+  },
+  {
+    "id": "product-manager",
+    "name": "产品经理",
+    "version": "v1.0",
+    "seniority": "初中级",
+    "focus": "验证用户问题定义、方案优先级、数据指标和协同推进",
+    "competencies": [
+      {"id":"problem-definition","name":"用户与问题定义","definition":"能从用户行为和业务目标中识别真实问题","weight":25,"score":84,"status":"verified","training":"用户访谈与问题树"},
+      {"id":"solution-priority","name":"方案设计与优先级","definition":"能在约束下形成方案并做出清晰取舍","weight":20,"score":79,"status":"partial","training":"需求拆解与优先级"},
+      {"id":"metrics-experiment","name":"数据指标与实验","definition":"能定义指标、设计验证并根据结果迭代","weight":20,"score":76,"status":"partial","training":"指标体系与 A/B 实验"},
+      {"id":"execution","name":"跨团队执行","definition":"能推动设计、研发、测试和运营形成交付闭环","weight":15,"score":81,"status":"verified","training":"项目推进与风险管理"},
+      {"id":"communication","name":"沟通表达","definition":"能结构化表达判断，促成共识并管理预期","weight":10,"score":88,"status":"verified","training":"结构化汇报"},
+      {"id":"business-learning","name":"商业意识与学习能力","definition":"能理解业务价值并持续吸收新领域知识","weight":10,"score":82,"status":"verified","training":"业务模型与复盘"}
+    ],
+    "jdSignals": [
+      {"quote":"负责用户需求分析与产品规划","competency":"problem-definition","priority":"高"},
+      {"quote":"制定产品指标并持续迭代","competency":"metrics-experiment","priority":"高"},
+      {"quote":"协调研发、设计和运营推动落地","competency":"execution","priority":"中"}
+    ],
+    "questions": [
+      {"stage":"自我介绍","text":"请介绍一个你推动落地的产品或功能，先说明用户问题和你的职责。","competency":"problem-definition"},
+      {"stage":"项目深挖","text":"当多个需求都很紧急时，你如何确定优先级？请给出判断依据。","competency":"solution-priority"},
+      {"stage":"能力考察","text":"你会如何定义这个功能是否成功？请说出核心指标、观察周期和实验方式。","competency":"metrics-experiment"},
+      {"stage":"总结反馈","text":"如果研发资源临时减少一半，你会保留什么、砍掉什么？为什么？","competency":"execution"}
+    ]
+  }
+]

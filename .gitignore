@@ -1,0 +1,28 @@
+# Secrets
+backend/.env
+.env
+*.env.local
+
+# Runtime data
+backend/data/app.db
+backend/data/*.db
+backend/data/uploads/
+
+# Python
+__pycache__/
+*.py[cod]
+backend/.venv/
+
+# Node / tooling
+node_modules/
+
+# Browser / temp artifacts
+*.log
+*.pid
+
+# Dev snapshots / backups
+.backup-*
+*.bak
+
+# Local tmp
+.tmp/

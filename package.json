@@ -1,0 +1,10 @@
+{
+  "name": "zhi-dao-ai-p0",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build-check.mjs",
+    "start": "python3 -m http.server 4173"
+  }
+}
