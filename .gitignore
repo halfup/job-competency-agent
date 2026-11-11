@@ -31,3 +31,6 @@ node_modules/
 # Local tmp
 .tmp/
 .workbuddy/
+
+# 发布应用生成的 app 绑定文件
+*.genie
