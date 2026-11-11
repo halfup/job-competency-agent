@@ -876,12 +876,18 @@ function authView(){
   const footSwitch=login?'还没有账号？ <button data-auth-mode="register">立即注册</button>':'已有账号？ <button data-auth-mode="login">返回登录</button>';
   const optionsHtml2=login?'<label class="remember"><input id="auth-remember" type="checkbox" '+(S.auth.remember?'checked':'')+'> <span>记住账号</span></label>':'<label class="remember"><input id="auth-agree" type="checkbox" checked> <span>我已阅读并同意服务条款与隐私说明</span></label>';
   return `<main class="auth-page">
+  <div class="auth-aurora" aria-hidden="true"><i class="auth-blob b1"></i><i class="auth-blob b2"></i><i class="auth-blob b3"></i><i class="auth-grid"></i></div>
   <header class="auth-brand">${brandLogo(44)}<div><b>职到 AI</b><span>岗位胜任力评估</span></div></header>
   <section class="auth-shell">
     <div class="auth-copy">
       <div class="auth-kicker">${svgIcon('sparkles',15)} Evidence-grounded Assessment</div>
       <h1>让每一次面试准备，<br><span>都有证据可循。</span></h1>
       <p>从岗位要求、简历声明到动态追问与能力报告，把「我会什么」变成可验证的真实能力证据。</p>
+      <div class="auth-benefits">
+        <div>${svgIcon('target',18)}<div><b>岗位能力映射</b><small>JD 原句可追溯，能力要求逐条对应面试问题。</small></div></div>
+        <div>${svgIcon('sparkles',18)}<div><b>Evidence 动态追问</b><small>证据不足先追问补证，不把未知直接计为低分。</small></div></div>
+        <div>${svgIcon('clock',18)}<div><b>长期能力画像</b><small>评估、训练与录音复盘持续回流，沉淀成长轨迹。</small></div></div>
+      </div>
     </div>
     <section class="auth-card">
       <div class="auth-tabs"><button class="${login?'active':''}" data-auth-mode="login">登录</button><button class="${!login?'active':''}" data-auth-mode="register">注册</button></div>
