@@ -890,17 +890,18 @@ function authView(){
   const tabsHtml=reset?'':'<div class="auth-tabs"><button class="'+(login?'active':'')+'" data-auth-mode="login">登录</button><button class="'+(!login?'active':'')+'" data-auth-mode="register">注册</button></div>';
   const headHtml=reset?'<div class="auth-card-head"><h2>重置密码</h2><p>输入注册时的手机号或邮箱，通过验证码设置新密码。</p></div>':'<div class="auth-card-head"><h2>'+(login?'欢迎回来':'创建账号')+'</h2><p>'+(login?'继续你的面试训练与能力成长记录。':'注册后即可保存简历、报告与长期能力画像。')+'</p></div>';
   return `<main class="auth-page">
-  <div class="auth-aurora" aria-hidden="true"><i class="auth-grid"></i></div>
+  <div class="auth-aurora" aria-hidden="true"><i class="auth-blob b1"></i><i class="auth-blob b2"></i><i class="auth-blob b3"></i><i class="auth-grid"></i></div>
   <header class="auth-brand">${brandLogo(44)}<div><b>职到 AI</b><span>岗位胜任力评估</span></div></header>
   <section class="auth-shell">
     <div class="auth-copy">
-      <h1>把「我会什么」<br>变成<em>可验证的证据</em>。</h1>
-      <p>不靠关键词打分。每条能力判定都会注明出处：JD 原句、面试追问和你的原话引用，逐层可回溯。</p>
-      <ol class="auth-steps">
-        <li><i>01</i><div><b>岗位要求逐条拆解</b><small>从 JD 原文映射能力项，标注来源与优先级。</small></div></li>
-        <li><i>02</i><div><b>证据不足先追问</b><small>没说清的地方继续问，不把未知直接算作不会。</small></div></li>
-        <li><i>03</i><div><b>结论全程可审计</b><small>评分依据来自你的原话引用，拒绝黑箱打分。</small></div></li>
-      </ol>
+      <div class="auth-kicker">${svgIcon('sparkles',15)} Evidence-grounded Assessment</div>
+      <h1>让每一次面试准备，<br><span>都有证据可循。</span></h1>
+      <p>从岗位要求、简历声明到动态追问与能力报告，把「我会什么」变成可验证的真实能力证据。</p>
+      <div class="auth-benefits">
+        <div>${svgIcon('target',18)}<div><b>岗位能力映射</b><small>JD 原句可追溯，能力要求逐条对应面试问题。</small></div></div>
+        <div>${svgIcon('sparkles',18)}<div><b>Evidence 动态追问</b><small>证据不足先追问补证，不把未知直接计为低分。</small></div></div>
+        <div>${svgIcon('clock',18)}<div><b>长期能力画像</b><small>评估、训练与录音复盘持续回流，沉淀成长轨迹。</small></div></div>
+      </div>
     </div>
     <section class="auth-card">
       ${tabsHtml}
