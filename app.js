@@ -29,7 +29,7 @@ const S = {
   serverSettings: null,
   backendReady: false,
   roleId: localStorage.getItem('zhidao-role') || 'java-backend',
-  auth: { loggedIn: !!localStorage.getItem('zhidao-token'), mode: 'login', message: '', messageType: 'error', submitting: false, showPwd: false, showConfirm: false, remember: localStorage.getItem('zhidao-remember-on') === '1', strength: 0, resetStep: 1, resetAccount: '' },
+  auth: { loggedIn: !!localStorage.getItem('zhidao-token'), mode: 'login', message: '', messageType: 'error', submitting: false, showPwd: false, showConfirm: false, remember: localStorage.getItem('zhidao-remember-on') === '1', strength: 0 },
   view: 'home',
   homeMode: null,
   jdReady: false,
@@ -84,8 +84,7 @@ const S = {
   ui: {
     toast: '',
     dark: localStorage.getItem('zhidao-dark') === '1',
-    collapsed: localStorage.getItem('zhidao-sidebar-collapsed') === '1',
-    legal: null
+    collapsed: localStorage.getItem('zhidao-sidebar-collapsed') === '1'
   },
   profile: { evidenceFilter: 'all', evidenceExpanded: false, data: null },
   agent: {
@@ -446,7 +445,6 @@ function svgIcon(name, size=17){
     phone:'<path d="M6 3h3l2 5-2.5 1.5a13 13 0 0 0 6 6L16 13l5 2v3a2 2 0 0 1-2 2A17 17 0 0 1 3 5a2 2 0 0 1 2-2z"/>',
     'shield-check':'<path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="m9 11.5 2 2 4-4.5"/>',
     'alert-circle':'<circle cx="12" cy="12" r="9"/><path d="M12 8v4.5M12 16h.01"/>',
-    x:'<path d="M6 6l12 12M18 6L6 18"/>',
     spinner:'<path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 3a9 9 0 0 1 9 9"/>'
   };
   return `<svg class="ui-icon" viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true">${p[name]||p.sparkles}</svg>`;
@@ -857,7 +855,6 @@ function shell(content){
 
 function authView(){
   const login=S.auth.mode==='login';
-  const reset=S.auth.mode==='reset';
   const msg=S.auth.message;
   const msgCls=S.auth.messageType==='success'?'auth-message success':'auth-message';
   const rememberedAccount=localStorage.getItem('zhidao-remember-account')||'';
@@ -869,26 +866,18 @@ function authView(){
   const strMeta=[['',''],['弱','#ef4444'],['中','#f59e0b'],['强','#10b981']][str];
   const strBar=[0,1,2,3].map(i=>`<i class="${str>=i+1?'on':''}"></i>`).join('');
   const strBarCls=str>0?'lv'+str:'';
-  const submitLabel=reset?(S.auth.resetStep===1?(S.auth.submitting?'发送中…':'获取验证码'):(S.auth.submitting?'重置中…':'确认重置')):(login?(S.auth.submitting?'登录中…':'登录并进入工作台'):(S.auth.submitting?'注册中…':'注册并开始使用'));
+  const submitLabel=login?(S.auth.submitting?'登录中…':'登录并进入工作台'):(S.auth.submitting?'注册中…':'注册并开始使用');
   const accountIcon=login?'user':'phone';
-  const nameField=(!login&&!reset)?'<label><span>姓名</span><div class="field-wrap"><span class="field-icon">'+svgIcon('user',15)+'</span><input id="auth-name" autocomplete="name" placeholder="请输入姓名"></div></label>':'';
-  const pwdPlaceholder=login?'请输入密码':(reset?'请设置新密码（8–20 位）':'请设置 8–20 位密码');
+  const nameField=login?'':'<label><span>姓名</span><div class="field-wrap"><span class="field-icon">'+svgIcon('user',15)+'</span><input id="auth-name" autocomplete="name" placeholder="请输入姓名"></div></label>';
+  const pwdPlaceholder=login?'请输入密码':'请设置 8–20 位密码';
   const pwdAutocomplete=login?'current-password':'new-password';
-  const pwdStrengthHtml=(!login&&!reset)?'<div class="pwd-strength"><div class="pwd-strength-bar '+strBarCls+'">'+strBar+'</div><span class="pwd-strength-text" style="color:'+strMeta[1]+'">'+strMeta[0]+'</span></div>':'';
-  const showConfirmField=(!login&&!reset)||(reset&&S.auth.resetStep===2);
-  const confirmField=showConfirmField?'<label><span>确认密码</span><div class="field-wrap password-wrap"><span class="field-icon">'+svgIcon('lock',15)+'</span><input id="auth-confirm" type="'+confType+'" autocomplete="new-password" placeholder="请再次输入密码"><button type="button" id="toggle-confirm" aria-label="显示或隐藏密码">'+svgIcon(confIcon,16)+'</button></div></label>':'';
-  const showPwdField=(!reset)||(S.auth.resetStep===2);
-  const codeField=(reset&&S.auth.resetStep===2)?'<label><span>验证码</span><div class="field-wrap"><span class="field-icon">'+svgIcon('shield-check',15)+'</span><input id="auth-code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="请输入 6 位数字验证码"></div></label>':'';
-  const resetHint=(reset&&S.auth.resetStep===2)?'<div class="auth-reset-hint">'+svgIcon('mail',13)+'<span>验证码已发送至账号 <b>'+esc(S.auth.resetAccount)+'</b>，10 分钟内有效</span></div>':'';
-  const accountField=(reset&&S.auth.resetStep===2)?'':'<label><span>手机号或邮箱</span><div class="field-wrap"><span class="field-icon">'+svgIcon(accountIcon,15)+'</span><input id="auth-account" autocomplete="username" placeholder="请输入手机号或邮箱" value="'+esc(S.auth.resetAccount||rememberedAccount)+'"></div></label>';
-  const pwdFieldHtml=showPwdField?'<label><span>'+(reset?'新密码':'密码')+'</span><div class="field-wrap password-wrap"><span class="field-icon">'+svgIcon('lock',15)+'</span><input id="auth-password" type="'+pwdType+'" autocomplete="'+pwdAutocomplete+'" placeholder="'+pwdPlaceholder+'"><button type="button" id="toggle-password" aria-label="显示或隐藏密码">'+svgIcon(pwdIcon,16)+'</button></div>'+pwdStrengthHtml+'</label>':'';
+  const pwdStrengthHtml=login?'':'<div class="pwd-strength"><div class="pwd-strength-bar '+strBarCls+'">'+strBar+'</div><span class="pwd-strength-text" style="color:'+strMeta[1]+'">'+strMeta[0]+'</span></div>';
+  const confirmField=login?'':'<label><span>确认密码</span><div class="field-wrap password-wrap"><span class="field-icon">'+svgIcon('lock',15)+'</span><input id="auth-confirm" type="'+confType+'" autocomplete="new-password" placeholder="请再次输入密码"><button type="button" id="toggle-confirm" aria-label="显示或隐藏密码">'+svgIcon(confIcon,16)+'</button></div></label>';
   const messageHtml=msg?'<p class="'+msgCls+'">'+(S.auth.messageType==='error'?svgIcon('alert-circle',13)+' ':'')+esc(msg)+'</p>':'<p class="auth-message"></p>';
   const submitHtml='<button class="auth-submit" type="submit" '+(S.auth.submitting?'disabled':'')+'>'+(S.auth.submitting?svgIcon('spinner',15)+' ':'')+submitLabel+(S.auth.submitting?'':' <span>→</span>')+'</button>';
   const forgotHtml=login?'<div class="auth-forgot"><button type="button" class="text-link" id="forgot-password">忘记密码？</button></div>':'';
-  const footSwitch=reset?'记起密码了？ <button data-auth-mode="login">返回登录</button>':(login?'还没有账号？ <button data-auth-mode="register">立即注册</button>':'已有账号？ <button data-auth-mode="login">返回登录</button>');
-  const optionsHtml2=reset?'':(login?'<label class="remember"><input id="auth-remember" type="checkbox" '+(S.auth.remember?'checked':'')+'> <span>记住账号</span></label>':'<label class="remember"><input id="auth-agree" type="checkbox" checked> <span>我已阅读并同意<button type="button" class="text-link" data-legal="terms">服务条款</button>与<button type="button" class="text-link" data-legal="privacy">隐私说明</button></span></label>');
-  const tabsHtml=reset?'':'<div class="auth-tabs"><button class="'+(login?'active':'')+'" data-auth-mode="login">登录</button><button class="'+(!login?'active':'')+'" data-auth-mode="register">注册</button></div>';
-  const headHtml=reset?'<div class="auth-card-head"><h2>重置密码</h2><p>输入注册时的手机号或邮箱，通过验证码设置新密码。</p></div>':'<div class="auth-card-head"><h2>'+(login?'欢迎回来':'创建账号')+'</h2><p>'+(login?'继续你的面试训练与能力成长记录。':'注册后即可保存简历、报告与长期能力画像。')+'</p></div>';
+  const footSwitch=login?'还没有账号？ <button data-auth-mode="register">立即注册</button>':'已有账号？ <button data-auth-mode="login">返回登录</button>';
+  const optionsHtml2=login?'<label class="remember"><input id="auth-remember" type="checkbox" '+(S.auth.remember?'checked':'')+'> <span>记住账号</span></label>':'<label class="remember"><input id="auth-agree" type="checkbox" checked> <span>我已阅读并同意服务条款与隐私说明</span></label>';
   return `<main class="auth-page">
   <div class="auth-aurora" aria-hidden="true"><i class="auth-blob b1"></i><i class="auth-blob b2"></i><i class="auth-blob b3"></i><i class="auth-grid"></i></div>
   <header class="auth-brand">${brandLogo(44)}<div><b>职到 AI</b><span>岗位胜任力评估</span></div></header>
@@ -904,56 +893,14 @@ function authView(){
       </div>
     </div>
     <section class="auth-card">
-      ${tabsHtml}
-      ${headHtml}
-      <form id="auth-form" class="auth-form" novalidate>${resetHint}${nameField}${accountField}${pwdFieldHtml}${codeField}${confirmField}<div class="auth-options">${optionsHtml2}</div>${submitHtml}${forgotHtml}${messageHtml}</form>
+      <div class="auth-tabs"><button class="${login?'active':''}" data-auth-mode="login">登录</button><button class="${!login?'active':''}" data-auth-mode="register">注册</button></div>
+      <div class="auth-card-head"><h2>${login?'欢迎回来':'创建账号'}</h2><p>${login?'继续你的面试训练与能力成长记录。':'注册后即可保存简历、报告与长期能力画像。'}</p></div>
+      <form id="auth-form" class="auth-form" novalidate>${nameField}<label><span>手机号或邮箱</span><div class="field-wrap"><span class="field-icon">${svgIcon(accountIcon,15)}</span><input id="auth-account" autocomplete="username" placeholder="请输入手机号或邮箱" value="${esc(rememberedAccount)}"></div></label><label><span>密码</span><div class="field-wrap password-wrap"><span class="field-icon">${svgIcon('lock',15)}</span><input id="auth-password" type="${pwdType}" autocomplete="${pwdAutocomplete}" placeholder="${pwdPlaceholder}"><button type="button" id="toggle-password" aria-label="显示或隐藏密码">${svgIcon(pwdIcon,16)}</button></div>${pwdStrengthHtml}</label>${confirmField}<div class="auth-options">${optionsHtml2}</div>${submitHtml}${forgotHtml}${messageHtml}</form>
       <div class="auth-foot">${footSwitch}</div>
     </section>
   </section>
-  <footer class="auth-footer"><span>© 2026 职到 AI · 岗位胜任力评估智能体</span><span class="auth-footer-links"><button type="button" class="auth-footer-link" data-legal="terms">服务条款</button><button type="button" class="auth-footer-link" data-legal="privacy">隐私说明</button><button type="button" class="auth-footer-link" data-legal="help">帮助中心</button></span></footer>
-  ${legalModalHtml()}
+  <footer class="auth-footer"><span>© 2026 职到 AI · 岗位胜任力评估智能体</span><span class="auth-footer-links"><a href="javascript:;">服务条款</a><a href="javascript:;">隐私说明</a><a href="javascript:;">帮助中心</a></span></footer>
 </main>`;
-}
-
-function legalModalHtml(){
-  const kind=S.ui.legal;
-  if(!kind) return '';
-  const content={
-    terms:[
-      ['一、服务说明','职到 AI 是一款基于证据（Evidence-grounded）的岗位胜任力评估与面试训练工具。系统依据您提供的简历、岗位描述与面试回答生成能力评估报告，所有评估结论均附带可追溯的证据引用。'],
-      ['二、账号规则','账号以手机号或邮箱注册，密码需 8 位以上。您应妥善保管账号与密码，因账号密码泄露造成的损失由您自行承担。连续输错密码 5 次后账号将临时锁定 5 分钟。'],
-      ['三、使用规范','您承诺不利用本服务从事违法违规活动，不上传违法侵权内容，不尝试破坏服务安全或恶意消耗系统资源。'],
-      ['四、AI 评估免责','AI 生成的评估结论、追问建议与训练反馈仅作为面试准备参考，不构成任何录用、胜任与否的承诺或保证。最终评判请以目标企业的真实面试为准。'],
-      ['五、服务变更','本服务为竞赛/单机演示版本，功能与条款可能随版本迭代调整。条款更新后将通过页面提示告知。']
-    ],
-    privacy:[
-      ['一、我们收集什么','注册账号（手机号或邮箱）、姓名；使用过程中您主动提供的简历文本、面试回答、知识库文档，以及录音复盘时上传的音频文件。'],
-      ['二、用途','上述数据仅用于：岗位能力映射、面试问题生成、证据抽取与评分、长期能力画像构建、知识库检索，以及成长建议生成。不用于任何其他商业用途。'],
-      ['三、存储位置','演示版所有业务数据存储于本机 SQLite 数据库（backend/data/），不上传至第三方服务器。'],
-      ['四、模型与语音调用','AI 评估需将相关文本发送至您所配置的 LLM 网关；录音复盘需将音频发送至所配置的语音识别网关。请确认相应服务商的隐私政策。'],
-      ['五、本机存储','登录令牌、界面偏好保存在浏览器 localStorage 中，用于保持登录态与个性化设置，可随时清除。'],
-      ['六、您的权利','您可随时删除简历、评估记录、知识库文档与录音复盘数据；如需删除账号及全部数据，请联系管理员处理。']
-    ],
-    help:[
-      ['忘记密码怎么办','在登录页点击「忘记密码」，输入注册手机号或邮箱即可通过验证码重置。未配置邮件通道的演示环境下，验证码会直接显示在页面提示中。'],
-      ['密码重置后需要重新登录吗','需要。密码重置成功后，该账号所有旧登录会话都会失效，请使用新密码重新登录。'],
-      ['账号被锁定了怎么办','连续输错密码 5 次会触发临时锁定，约 5 分钟后自动解除，期间无需任何操作。'],
-      ['数据保存在哪里','演示版数据均在本机：业务数据存于 backend/data/ 下的 SQLite 数据库，登录令牌存于浏览器 localStorage。'],
-      ['评估报告可信吗','报告遵循「证据可追溯」原则：每条结论都可回溯到 JD 原句、面试问题与您的原始回答引用。未获得足够证据的能力标记为「待验证」，不会直接判低分。'],
-      ['联系我们','使用问题可联系管理员邮箱 support@zhidao-ai.example（演示占位）。']
-    ]
-  }[kind];
-  if(!content) return '';
-  const title=({terms:'服务条款',privacy:'隐私说明',help:'帮助中心'})[kind];
-  const updated=({terms:'2026-11-11',privacy:'2026-11-11',help:'2026-11-11'})[kind];
-  const body=content.map(s=>`<h3>${s[0]}</h3><p>${s[1]}</p>`).join('');
-  return `<div class="legal-overlay" data-legal-overlay>
-    <div class="legal-modal" role="dialog" aria-modal="true" aria-label="${title}">
-      <header><h2>${title}</h2><span class="legal-updated">更新于 ${updated}</span><button type="button" class="legal-close" data-legal-close aria-label="关闭">${svgIcon('x',16)}</button></header>
-      <div class="legal-body">${body}</div>
-      <footer><button type="button" class="legal-ok" data-legal-close>我知道了</button></footer>
-    </div>
-  </div>`;
 }
 
 function pageTitle(){
@@ -2222,58 +2169,14 @@ function pwdStrength(p){
   return Math.min(3, s);
 }
 function bindAuth(){
-  document.querySelectorAll('[data-auth-mode]').forEach(el=>el.onclick=()=>{S.auth.mode=el.dataset.authMode;S.auth.message='';S.auth.strength=0;S.auth.showPwd=false;S.auth.showConfirm=false;S.auth.resetStep=1;render();});
+  document.querySelectorAll('[data-auth-mode]').forEach(el=>el.onclick=()=>{S.auth.mode=el.dataset.authMode;S.auth.message='';S.auth.strength=0;S.auth.showPwd=false;S.auth.showConfirm=false;render();});
   const toggle=document.getElementById('toggle-password'); if(toggle) toggle.onclick=()=>{S.auth.showPwd=!S.auth.showPwd;render();};
   const toggleConf=document.getElementById('toggle-confirm'); if(toggleConf) toggleConf.onclick=()=>{S.auth.showConfirm=!S.auth.showConfirm;render();};
-  const forgot=document.getElementById('forgot-password'); if(forgot) forgot.onclick=()=>{S.auth.mode='reset';S.auth.resetStep=1;S.auth.message='';S.auth.strength=0;S.auth.showPwd=false;S.auth.showConfirm=false;render();};
-  // 服务条款 / 隐私说明 / 帮助中心弹窗
-  document.querySelectorAll('[data-legal]').forEach(el=>el.onclick=e=>{e.preventDefault();e.stopPropagation();S.ui.legal=el.dataset.legal;render();});
-  document.querySelectorAll('[data-legal-close]').forEach(el=>el.onclick=()=>{S.ui.legal=null;render();});
-  const overlay=document.querySelector('[data-legal-overlay]'); if(overlay) overlay.onclick=e=>{if(e.target===overlay){S.ui.legal=null;render();}};
+  const forgot=document.getElementById('forgot-password'); if(forgot) forgot.onclick=()=>{setAuthMsg('当前为演示版本，密码重置暂未接入，如需重置请联系管理员。');};
   const pwdInput=document.getElementById('auth-password'); if(pwdInput) pwdInput.oninput=()=>{S.auth.strength=pwdStrength(pwdInput.value);const str=document.querySelector('.pwd-strength-text');const bar=document.querySelector('.pwd-strength-bar');const bars=document.querySelectorAll('.pwd-strength-bar i');if(str){const m=[['',''],['弱','#ef4444'],['中','#f59e0b'],['强','#10b981']][S.auth.strength];str.textContent=m[0];str.style.color=m[1];}if(bar)bar.className='pwd-strength-bar '+(S.auth.strength>0?'lv'+S.auth.strength:'');bars.forEach((b,i)=>b.className=S.auth.strength>=i+1?'on':'');};
   const form=document.getElementById('auth-form'); if(form) form.onsubmit=async e=>{
     e.preventDefault();
     if(S.auth.submitting) return;
-    // ---------- 忘记密码 / 重置流程 ----------
-    if(S.auth.mode==='reset'){
-      const account=(document.getElementById('auth-account')?.value||S.auth.resetAccount||'').trim();
-      const password=(document.getElementById('auth-password')?.value||'').trim();
-      if(S.auth.resetStep===1){
-        if(!account){markField('auth-account',true);setAuthMsg('请输入手机号或邮箱');return;}
-        if(!accountKind(account)){markField('auth-account',true);setAuthMsg('账号格式不正确，请输入有效的手机号或邮箱');return;}
-        markField('auth-account',false);
-        S.auth.submitting=true; S.auth.message=''; render();
-        try{
-          const data=await apiRequest('/auth/reset/request',{method:'POST',body:JSON.stringify({account})});
-          S.auth.resetAccount=account; S.auth.resetStep=2; S.auth.submitting=false;
-          S.auth.message=data.dev_code?('演示模式：本次验证码为 '+data.dev_code+'（未配置邮件通道时验证码直接返回，10 分钟内有效）'):'验证码已发送，请查收（10 分钟内有效）';
-          S.auth.messageType='success'; render();
-        }catch(err){
-          S.auth.submitting=false; S.auth.message=err?.message||'请求失败，请稍后重试'; S.auth.messageType='error'; render();
-        }
-        return;
-      }
-      const code=(document.getElementById('auth-code')?.value||'').trim();
-      if(!/^\d{6}$/.test(code)){markField('auth-code',true);setAuthMsg('请输入 6 位数字验证码');return;}
-      markField('auth-code',false);
-      if(password.length<8){markField('auth-password',true);setAuthMsg('新密码至少需要 8 位');return;}
-      markField('auth-password',false);
-      const confirm=(document.getElementById('auth-confirm')?.value||'').trim();
-      if(password!==confirm){markField('auth-confirm',true);setAuthMsg('两次输入的密码不一致');return;}
-      markField('auth-confirm',false);
-      S.auth.submitting=true; S.auth.message=''; render();
-      try{
-        await apiRequest('/auth/reset/confirm',{method:'POST',body:JSON.stringify({account:S.auth.resetAccount,code,new_password:password})});
-        localStorage.setItem('zhidao-remember-account',S.auth.resetAccount);
-        S.auth.mode='login'; S.auth.resetStep=1; S.auth.resetAccount=''; S.auth.submitting=false;
-        S.auth.strength=0; S.auth.showPwd=false; S.auth.showConfirm=false;
-        S.auth.message='密码已重置，请使用新密码登录'; S.auth.messageType='success'; render();
-      }catch(err){
-        S.auth.submitting=false; S.auth.message=err?.message||'请求失败，请稍后重试'; S.auth.messageType='error'; render();
-      }
-      return;
-    }
-    // ---------- 登录 / 注册 ----------
     const isRegister=S.auth.mode==='register';
     const account=(document.getElementById('auth-account')?.value||'').trim();
     const password=(document.getElementById('auth-password')?.value||'').trim();
