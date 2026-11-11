@@ -14,7 +14,17 @@ from sqlalchemy.orm import Session
 from .config import ROOT_DIR, DATA_DIR, settings
 from .database import Base, engine, get_db, SessionLocal
 from .models import AgentConversation, AssessmentAnswer, AssessmentSession, AuthToken, DrillAttempt, DrillSession, Evidence, JobAnalysis, KnowledgeDocument, ProfileEvent, RecordingReview, Resume, RolePack, User, UserSetting
-from .services.auth_service import AuthError, issue_token, login_user, register_user, resolve_token, revoke_token, user_payload
+from .services.auth_service import (
+    AuthError,
+    confirm_password_reset,
+    issue_token,
+    login_user,
+    register_user,
+    request_password_reset,
+    resolve_token,
+    revoke_token,
+    user_payload,
+)
 from .seed import DEMO_USER_ID, seed
 from .services.resume_service import extract_text_from_file, parse_resume_text
 from .services.job_service import analyze_job
@@ -85,9 +95,9 @@ def auth_register(body: AuthRegisterBody, db: Session = Depends(get_db)) -> dict
 
 
 @app.post("/api/auth/login")
-def auth_login(body: AuthLoginBody, db: Session = Depends(get_db)) -> dict[str, Any]:
+def auth_login(body: AuthLoginBody, request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
     try:
-        user = login_user(db, account=body.account, password=body.password)
+        user = login_user(db, account=body.account, password=body.password, client_ip=(request.client.host if request.client else ""))
     except AuthError as e:
         raise HTTPException(e.status, e.message)
     token = issue_token(db, user.id)
@@ -106,6 +116,36 @@ def auth_me(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
     if not user:
         raise HTTPException(401, "未登录或会话已过期")
     return ok(user_payload(user))
+
+
+class AuthResetRequestBody(BaseModel):
+    account: str
+
+
+class AuthResetConfirmBody(BaseModel):
+    account: str
+    code: str
+    new_password: str
+
+
+@app.post("/api/auth/reset/request")
+def auth_reset_request(body: AuthResetRequestBody, request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
+    client_ip = request.client.host if request.client else ""
+    try:
+        payload = request_password_reset(db, account=body.account, client_ip=client_ip)
+    except AuthError as e:
+        raise HTTPException(e.status, e.message)
+    return ok(payload)
+
+
+@app.post("/api/auth/reset/confirm")
+def auth_reset_confirm(body: AuthResetConfirmBody, request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
+    client_ip = request.client.host if request.client else ""
+    try:
+        confirm_password_reset(db, account=body.account, code=body.code, new_password=body.new_password, client_ip=client_ip)
+    except AuthError as e:
+        raise HTTPException(e.status, e.message)
+    return ok(True)
 
 
 @app.get("/api/health")

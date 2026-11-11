@@ -31,6 +31,18 @@ class AuthToken(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now)
 
 
+class PasswordResetCode(Base):
+    __tablename__ = "password_reset_codes"
+    # 密码重置验证码：只存 sha256(code)，10 分钟有效，验证失败次数受限
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    account: Mapped[str] = mapped_column(String(255), index=True)
+    code_hash: Mapped[str] = mapped_column(String(64))
+    expires_at: Mapped[datetime] = mapped_column(DateTime, default=now)
+    used: Mapped[bool] = mapped_column(Boolean, default=False)
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=now)
+
+
 class UserSetting(Base):
     __tablename__ = "user_settings"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)

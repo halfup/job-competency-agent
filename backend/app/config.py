@@ -24,6 +24,12 @@ class Settings(BaseSettings):
     speech_api_secret: str = ""
     speech_app_id: str = ""
     speech_model: str = ""
+    # 密码重置验证码邮件通道（可选；不配置时走演示模式，验证码随接口返回）
+    smtp_host: str = ""
+    smtp_port: int = 465
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_from: str = ""
 
     model_config = SettingsConfigDict(
         env_file=str(BACKEND_DIR / ".env"),
