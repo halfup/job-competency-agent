@@ -5,6 +5,8 @@ async function apiRequest(path, options={}){
   const isForm=typeof FormData!=='undefined' && options.body instanceof FormData;
   const headers={...(options.headers||{})};
   if(!isForm && options.body!==undefined && !headers['Content-Type']) headers['Content-Type']='application/json';
+  const token=localStorage.getItem('zhidao-token');
+  if(token && !headers['Authorization']) headers['Authorization']='Bearer '+token;
   const res=await fetch(`${API_BASE}${path}`,{
     headers,
     ...options
@@ -27,7 +29,7 @@ const S = {
   serverSettings: null,
   backendReady: false,
   roleId: localStorage.getItem('zhidao-role') || 'java-backend',
-  auth: { loggedIn: localStorage.getItem('zhidao-auth') === '1', mode: 'login', message: '', messageType: 'error', submitting: false, showPwd: false, showConfirm: false, remember: localStorage.getItem('zhidao-remember-on') === '1', strength: 0 },
+  auth: { loggedIn: !!localStorage.getItem('zhidao-token'), mode: 'login', message: '', messageType: 'error', submitting: false, showPwd: false, showConfirm: false, remember: localStorage.getItem('zhidao-remember-on') === '1', strength: 0 },
   view: 'home',
   homeMode: null,
   jdReady: false,
@@ -827,6 +829,7 @@ function competencyToTopic(id){
 
 function role(){ return S.roles.find(r => r.id === S.roleId) || S.roles[0] || {competencies:[],questions:[],jdSignals:[]}; }
 function esc(v=''){ return String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function userName(){ return localStorage.getItem('zhidao-user-name')||'张同学'; }
 function avg(r){ const all=r.competencies||[]; const w=all.reduce((a,x)=>a+x.weight,0)||1; return Math.round(all.reduce((a,x)=>a+x.score*x.weight,0)/w); }
 function pct(v){ return Math.max(0,Math.min(100,Number(v)||0)); }
 function resetInterview(){ const prev=S.interview||{}; S.interview={started:false,mode:'evaluation',sourceMode:prev.sourceMode||'resume',company:prev.company||'',targetRole:prev.targetRole||'',jobJD:prev.jobJD||'',useResume:prev.useResume!==false,index:0,answers:[],drafts:[],skipped:[],gap:null,resolved:false,sessionId:null,jobAnalysisId:null,backendQuestions:[],followupQuestion:null,lastEvidence:null}; S.reportData=null;S.auditData=null; }
@@ -840,7 +843,7 @@ function shell(content){
     <aside class="sidebar">
       <div class="brand">${brandLogo(42)}<div><div class="brand-name">职到 AI</div><div class="brand-desc">岗位胜任力评估智能体</div></div></div>
       <nav class="side-nav-scroll">${groups}</nav>
-      <div class="side-bottom"><div class="mini-user"><div class="avatar">张</div><div><b>张同学</b><span>Java 后端求职中</span></div></div><button class="side-link side-action" id="dark-toggle"><span class="side-icon">${svgIcon('moon')}</span><span>深色模式</span></button><button class="side-link side-action" id="collapse-sidebar"><span class="side-icon collapse-icon">${svgIcon('chevron')}</span><span>${S.ui.collapsed?'展开侧栏':'收起侧栏'}</span></button><button class="side-link logout-link" id="logout-btn"><span class="side-icon">${svgIcon('logout')}</span><span>退出登录</span></button></div>
+      <div class="side-bottom"><div class="mini-user"><div class="avatar">${esc((userName()||'张').slice(0,1))}</div><div><b>${esc(userName())}</b><span>Java 后端求职中</span></div></div><button class="side-link side-action" id="dark-toggle"><span class="side-icon">${svgIcon('moon')}</span><span>深色模式</span></button><button class="side-link side-action" id="collapse-sidebar"><span class="side-icon collapse-icon">${svgIcon('chevron')}</span><span>${S.ui.collapsed?'展开侧栏':'收起侧栏'}</span></button><button class="side-link logout-link" id="logout-btn"><span class="side-icon">${svgIcon('logout')}</span><span>退出登录</span></button></div>
     </aside>
     <main class="main">
       <header class="topbar"><div class="crumb"><span>职到 AI</span><b>/</b><strong>${pageTitle()}</strong></div><div class="top-actions"><button class="status-pill" data-nav="profile"><i></i><span>画像持续更新</span></button><select id="role-switch" class="role-select">${opts}</select></div></header>
@@ -2171,9 +2174,10 @@ function bindAuth(){
   const toggleConf=document.getElementById('toggle-confirm'); if(toggleConf) toggleConf.onclick=()=>{S.auth.showConfirm=!S.auth.showConfirm;render();};
   const forgot=document.getElementById('forgot-password'); if(forgot) forgot.onclick=()=>{setAuthMsg('当前为演示版本，密码重置暂未接入，如需重置请联系管理员。');};
   const pwdInput=document.getElementById('auth-password'); if(pwdInput) pwdInput.oninput=()=>{S.auth.strength=pwdStrength(pwdInput.value);const str=document.querySelector('.pwd-strength-text');const bar=document.querySelector('.pwd-strength-bar');const bars=document.querySelectorAll('.pwd-strength-bar i');if(str){const m=[['',''],['弱','#ef4444'],['中','#f59e0b'],['强','#10b981']][S.auth.strength];str.textContent=m[0];str.style.color=m[1];}if(bar)bar.className='pwd-strength-bar '+(S.auth.strength>0?'lv'+S.auth.strength:'');bars.forEach((b,i)=>b.className=S.auth.strength>=i+1?'on':'');};
-  const form=document.getElementById('auth-form'); if(form) form.onsubmit=e=>{
+  const form=document.getElementById('auth-form'); if(form) form.onsubmit=async e=>{
     e.preventDefault();
     if(S.auth.submitting) return;
+    const isRegister=S.auth.mode==='register';
     const account=(document.getElementById('auth-account')?.value||'').trim();
     const password=(document.getElementById('auth-password')?.value||'').trim();
     // 账号校验
@@ -2183,28 +2187,37 @@ function bindAuth(){
     markField('auth-account',false);
     // 密码校验
     if(password.length<6){markField('auth-password',true);setAuthMsg('密码至少需要 6 位');return;}
-    if(S.auth.mode==='register' && password.length<8){markField('auth-password',true);setAuthMsg('注册密码建议至少 8 位');return;}
+    if(isRegister && password.length<8){markField('auth-password',true);setAuthMsg('注册密码至少需要 8 位');return;}
     markField('auth-password',false);
-    if(S.auth.mode==='register'){
-      const name=(document.getElementById('auth-name')?.value||'').trim();
+    let name='';
+    if(isRegister){
+      name=(document.getElementById('auth-name')?.value||'').trim();
       const confirm=(document.getElementById('auth-confirm')?.value||'').trim();
       if(!name){markField('auth-name',true);setAuthMsg('请输入姓名');return;}
       markField('auth-name',false);
       if(password!==confirm){markField('auth-confirm',true);setAuthMsg('两次输入的密码不一致');return;}
       markField('auth-confirm',false);
       if(!document.getElementById('auth-agree')?.checked){setAuthMsg('请先同意服务条款与隐私说明');return;}
-      localStorage.setItem('zhidao-user-name',name);
     }
     // 记住账号
     if(document.getElementById('auth-remember')?.checked){localStorage.setItem('zhidao-remember-account',account);localStorage.setItem('zhidao-remember-on','1');}
     else {localStorage.removeItem('zhidao-remember-account');localStorage.removeItem('zhidao-remember-on');}
-    // 模拟提交
+    // 真实认证请求
     S.auth.submitting=true; S.auth.message=''; render();
-    setTimeout(()=>{
+    try{
+      const data=await apiRequest(isRegister?'/auth/register':'/auth/login',{method:'POST',body:JSON.stringify({account,password,name})});
+      localStorage.setItem('zhidao-token',data.token);
       localStorage.setItem('zhidao-auth','1');
       localStorage.setItem('zhidao-auth-account',account);
-      S.auth.loggedIn=true;S.auth.submitting=false;S.auth.message='';S.view='home';render();
-    }, 600);
+      if(data.user?.name) localStorage.setItem('zhidao-user-name',data.user.name);
+      S.auth.loggedIn=true; S.auth.submitting=false; S.auth.message=''; S.view='home';
+      render();
+    }catch(err){
+      S.auth.submitting=false;
+      S.auth.message=err?.message||'请求失败，请稍后重试';
+      S.auth.messageType='error';
+      render();
+    }
   };
 }
 function markField(id, error){
@@ -2220,10 +2233,26 @@ function bindMotion(){
 function render(){
   if(!S.auth.loggedIn){root.innerHTML=authView();bindAuth();return;}
   root.innerHTML=shell(`<div class="view-enter">${renderView()}</div>`); bind(); bindMotion();
-  const out=document.getElementById('logout-btn'); if(out) out.onclick=()=>{localStorage.removeItem('zhidao-auth');S.auth.loggedIn=false;S.auth.mode='login';S.auth.message='';render();};
+  const out=document.getElementById('logout-btn'); if(out) out.onclick=async()=>{
+    try{await apiRequest('/auth/logout',{method:'POST'});}catch(e){}
+    ['zhidao-token','zhidao-auth','zhidao-auth-account'].forEach(k=>localStorage.removeItem(k));
+    S.auth.loggedIn=false;S.auth.mode='login';S.auth.message='';S.view='home';render();
+  };
 }
 
 async function bootstrap(){
+  // 先用 token 校验会话，失效则回到登录页
+  if(localStorage.getItem('zhidao-token')){
+    try{
+      const me=await apiRequest('/auth/me');
+      if(me?.name) localStorage.setItem('zhidao-user-name',me.name);
+      S.auth.loggedIn=true;
+    }catch(err){
+      ['zhidao-token','zhidao-auth','zhidao-auth-account'].forEach(k=>localStorage.removeItem(k));
+      S.auth.loggedIn=false;
+    }
+  }
+  if(!S.auth.loggedIn){ render(); return; }
   try{
     S.roles=await apiRequest('/roles');
     S.backendReady=true;

@@ -3,7 +3,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 import uuid
 from typing import Any, Optional
-from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, UploadFile
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -13,7 +13,8 @@ from sqlalchemy.orm import Session
 
 from .config import ROOT_DIR, DATA_DIR, settings
 from .database import Base, engine, get_db, SessionLocal
-from .models import AgentConversation, AssessmentAnswer, AssessmentSession, DrillAttempt, DrillSession, Evidence, JobAnalysis, KnowledgeDocument, ProfileEvent, RecordingReview, Resume, RolePack, UserSetting
+from .models import AgentConversation, AssessmentAnswer, AssessmentSession, AuthToken, DrillAttempt, DrillSession, Evidence, JobAnalysis, KnowledgeDocument, ProfileEvent, RecordingReview, Resume, RolePack, User, UserSetting
+from .services.auth_service import AuthError, issue_token, login_user, register_user, resolve_token, revoke_token, user_payload
 from .seed import DEMO_USER_ID, seed
 from .services.resume_service import extract_text_from_file, parse_resume_text
 from .services.job_service import analyze_job
@@ -32,13 +33,79 @@ app.add_middleware(
 
 @app.on_event("startup")
 def startup() -> None:
+    _migrate_auth_columns()
     Base.metadata.create_all(engine)
     with SessionLocal() as db:
         seed(db)
 
 
+def _migrate_auth_columns() -> None:
+    """已有 SQLite 库补齐 users.account / users.password_hash 列（create_all 不会 ALTER 旧表）。"""
+    with engine.begin() as conn:
+        cols = {row[1] for row in conn.exec_driver_sql("PRAGMA table_info(users)").fetchall()}
+        if "account" not in cols:
+            conn.exec_driver_sql("ALTER TABLE users ADD COLUMN account VARCHAR(255)")
+            conn.exec_driver_sql("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_account ON users (account)")
+        if "password_hash" not in cols:
+            conn.exec_driver_sql("ALTER TABLE users ADD COLUMN password_hash VARCHAR(255)")
+
+
 def ok(data: Any) -> dict[str, Any]:
     return {"ok": True, "data": data}
+
+
+# ---------------- Auth ----------------
+
+class AuthRegisterBody(BaseModel):
+    account: str
+    password: str
+    name: str = ""
+
+
+class AuthLoginBody(BaseModel):
+    account: str
+    password: str
+
+
+def _bearer_token(request: Request) -> str:
+    header = request.headers.get("authorization") or ""
+    if header.lower().startswith("bearer "):
+        return header[7:].strip()
+    return ""
+
+
+@app.post("/api/auth/register")
+def auth_register(body: AuthRegisterBody, db: Session = Depends(get_db)) -> dict[str, Any]:
+    try:
+        user = register_user(db, account=body.account, password=body.password, name=body.name)
+    except AuthError as e:
+        raise HTTPException(e.status, e.message)
+    token = issue_token(db, user.id)
+    return ok({"token": token, "user": user_payload(user)})
+
+
+@app.post("/api/auth/login")
+def auth_login(body: AuthLoginBody, db: Session = Depends(get_db)) -> dict[str, Any]:
+    try:
+        user = login_user(db, account=body.account, password=body.password)
+    except AuthError as e:
+        raise HTTPException(e.status, e.message)
+    token = issue_token(db, user.id)
+    return ok({"token": token, "user": user_payload(user)})
+
+
+@app.post("/api/auth/logout")
+def auth_logout(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
+    revoke_token(db, _bearer_token(request))
+    return ok(True)
+
+
+@app.get("/api/auth/me")
+def auth_me(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
+    user = resolve_token(db, _bearer_token(request))
+    if not user:
+        raise HTTPException(401, "未登录或会话已过期")
+    return ok(user_payload(user))
 
 
 @app.get("/api/health")
